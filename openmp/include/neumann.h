@@ -132,7 +132,7 @@ namespace Poisson{
 
     template<class T>
     void Neumann<T>::update(Domain<T> & domain,bool previous, bool fetch_neighbor){
-        #pragma omp task default(none) shared(domain) firstprivate(previous) depend(in:domain.uprev->at[0],domain.u->at[0]) depend(out:this->arr.at[0])
+        //#pragma omp task default(none) shared(domain) firstprivate(previous) depend(in:domain.uprev->at[0],domain.u->at[0]) depend(out:this->arr.at[0])
         {
             if (previous){
                 this->write_to(*domain.uprev,domain.settings);

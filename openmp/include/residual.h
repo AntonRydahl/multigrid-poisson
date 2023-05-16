@@ -23,7 +23,7 @@ namespace Poisson{
         const T hsq = domain.settings.h*domain.settings.h;
 
         // Updating boundaries
-        #pragma omp taskgroup
+        //#pragma omp taskgroup
         {
             domain.east->update(domain,false,fetch_neighbor);
             domain.west->update(domain,false,fetch_neighbor);
@@ -42,7 +42,7 @@ namespace Poisson{
         const int_t zmin = domain.bottom->is_non_eliminated();
         const int_t zmax = u.shape[2]-domain.top->is_non_eliminated();
 
-        //#pragma omp task default(none) shared(u,r,f) firstprivate(hsq,xmin,xmax,ymin,ymax,zmin,zmax) depend(in:u) depend(out:r)
+        ////#pragma omp task default(none) shared(u,r,f) firstprivate(hsq,xmin,xmax,ymin,ymax,zmin,zmax) depend(in:u) depend(out:r)
         {
             T * udev = u.devptr;
             T * rdev = r.devptr;

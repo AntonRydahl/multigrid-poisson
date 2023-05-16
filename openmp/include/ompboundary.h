@@ -202,12 +202,12 @@ namespace Poisson{
         //cout << "Device is " << this->arr.device << endl;
         if (fetch_neighbor){
             OMPBoundary<T> * omp_neighbor = ((OMPBoundary<T> * )this->neighbor);
-            #pragma omp task default(none) firstprivate(omp_neighbor) depend(in:omp_neighbor->send_buffer.at[0]) depend(out:this->arr.at[0])
+            //#pragma omp task default(none) firstprivate(omp_neighbor) depend(in:omp_neighbor->send_buffer.at[0]) depend(out:this->arr.at[0])
             {
                 omp_neighbor->send_buffer.device_to_device(this->arr);
             }
         }
-        #pragma omp task default(none) shared(domain) firstprivate(previous) depend(in:this->arr.at[0],domain.uprev->at[0],domain.u->at[0]) depend(out:this->arr.at[0])
+        //#pragma omp task default(none) shared(domain) firstprivate(previous) depend(in:this->arr.at[0],domain.uprev->at[0],domain.u->at[0]) depend(out:this->arr.at[0])
         {
             if (previous){
                 this->write_to(*domain.uprev,domain.settings);

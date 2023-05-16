@@ -239,34 +239,15 @@ namespace Poisson{
         double_t rnorm = 0.0;
 
         // Calculating initial relative residual
-        #pragma omp parallel reduction(+:fnorm) reduction(+:rnorm)
-        {
-            #pragma omp single nowait
-            {
-                #pragma omp taskgroup task_reduction(+:rnorm) task_reduction(+:fnorm)
-                {
-                    for (uint_t gpuid = 0; gpuid<num_devices;gpuid++){
-
-                        #pragma omp task default(none) shared(domains) firstprivate(gpuid) depend(inout:domains[gpuid][0]->f) in_reduction(+:fnorm)
-                        {
-                            double_t fnorm_task = domains[gpuid][0]->f->infinity_norm();
-                            #pragma omp atomic
-                            fnorm += fnorm_task;
-                        }
-                        #pragma omp task depend(out:domains[gpuid][0]->r)
-                        {
-                            residual<T>(*domains[gpuid][0],false);
-                        }
-
-                        #pragma omp task default(none) shared(domains) firstprivate(gpuid) depend(in:domains[gpuid][0]->r) in_reduction(+:rnorm)
-                        {
-                            double_t rnorm_task = domains[gpuid][0]->r->infinity_norm();
-                            #pragma omp atomic
-                            rnorm += rnorm_task;
-                        }
-                    }
-                }
-            }
+        #pragma omp parallel for num_threads(num_devices) reduction(+:fnorm) reduction(+:rnorm)
+        for (uint_t gpuid = 0; gpuid<num_devices;gpuid++){
+            double_t fnorm_task = domains[gpuid][0]->f->infinity_norm();
+            #pragma omp atomic
+            fnorm += fnorm_task;
+            residual<T>(*domains[gpuid][0],false);
+            double_t rnorm_task = domains[gpuid][0]->r->infinity_norm();
+            #pragma omp atomic
+            rnorm += rnorm_task;
         }
 
         rel_res = rnorm / fnorm;
@@ -295,26 +276,12 @@ namespace Poisson{
                 //}
             }
             T norm = 0.0;
-            #pragma omp parallel
-            {
-                #pragma omp single nowait
-                {
-                    #pragma omp taskgroup task_reduction(+:norm)
-                    {
-                        for (uint_t gpuid = 0; gpuid < num_devices; gpuid++){
-                            #pragma omp task default(none) shared(domains) firstprivate(gpuid) depend(out:domains[gpuid][0]->r)
-                            {
-                                residual<T>(*domains[gpuid][0]);
-                            }
-                            #pragma omp task default(none) shared(domains) firstprivate(gpuid) depend(in:domains[gpuid][0]->r) in_reduction(+:norm)
-                            {   
-                                double_t norm_task = domains[gpuid][0]->r->infinity_norm();
-                                #pragma omp atomic
-                                norm += norm_task;
-                            }
-                        }
-                    }
-                }
+            #pragma omp parallel for num_threads(num_devices) reduction(+:norm)
+            for (uint_t gpuid = 0; gpuid < num_devices; gpuid++){
+                residual<T>(*domains[gpuid][0]);
+                double_t norm_task = domains[gpuid][0]->r->infinity_norm();
+                #pragma omp atomic
+                norm += norm_task;
             }
             norm /= fnorm;
             if (ofile.compare("")!=0){

@@ -31,9 +31,7 @@ namespace Poisson{
         }
 
         // Compute and restrict the defect
-        #pragma omp parallel
-        #pragma omp single nowait
-        #pragma omp taskgroup
+        #pragma omp parallel for num_threads(num_devices)
         for (int_t gpuid = 0; gpuid < num_devices;gpuid++){
             #pragma omp task default(none) shared(domains,level) firstprivate(gpuid)\
             depend(in:domains[gpuid][level]->u->at[0])\
@@ -78,9 +76,7 @@ namespace Poisson{
         Vcycle<T>(domains,restriction,prolongation,relaxation,omega,level+1,levels,num_devices,nsmooth);
 
         // Interpolate error
-        #pragma omp parallel
-        #pragma omp single nowait
-        #pragma omp taskgroup
+        #pragma omp parallel for num_threads(num_devices)
         for (int_t gpuid = 0; gpuid < num_devices;gpuid++){
             #pragma omp task default(none) shared(prolongation,domains,level) firstprivate(gpuid)\
             depend(in:domains[gpuid][level+1]->u->at[0])\

@@ -29,60 +29,38 @@ namespace Poisson{
     template <class T>
     void Jacobi<T>::relax(Domain<T> *** domains,T omega,int_t nsmooth,int_t level,int_t num_devices){
         
-        #pragma omp parallel
-        #pragma omp single nowait
-        #pragma omp taskgroup
+        //#pragma omp parallel
+        //#pragma omp single nowait
+        //#pragma omp taskgroup
         {
             for (int_t s = 0;s<nsmooth;s++){
                 // Swapping domains
                 //#pragma omp taskgroup
                 {
+                #pragma omp parallel for num_threads(num_devices)
                 for (int_t gpuid=0;gpuid<num_devices;gpuid++){
                     Domain<T> & domain = *domains[gpuid][level];
                     #pragma omp task default(none) shared(domain) depend(inout:domain.uprev->at[0],domain.u->at[0])
                     domain.swap_u();
-                }
-                // Applying boundary conditions
-                for (int_t gpuid=0;gpuid<num_devices;gpuid++){
+
                     domains[gpuid][level]->east->update(*domains[gpuid][level],true);
-                }
-                for (int_t gpuid=0;gpuid<num_devices;gpuid++){
                     domains[gpuid][level]->west->update(*domains[gpuid][level],true);
-                }
-                for (int_t gpuid=0;gpuid<num_devices;gpuid++){
                     domains[gpuid][level]->north->update(*domains[gpuid][level],true);
-                }
-                for (int_t gpuid=0;gpuid<num_devices;gpuid++){
                     domains[gpuid][level]->south->update(*domains[gpuid][level],true);
-                }
-                for (int_t gpuid=0;gpuid<num_devices;gpuid++){
                     domains[gpuid][level]->top->update(*domains[gpuid][level],true);
-                }
-                for (int_t gpuid=0;gpuid<num_devices;gpuid++){
                     domains[gpuid][level]->bottom->update(*domains[gpuid][level],true);
                 }
 
                 // Computing halo values
+                #pragma omp parallel for num_threads(num_devices)
                 for (int_t gpuid=0;gpuid<num_devices;gpuid++){
                     fill_send_buffer(*domains[gpuid][level],omega,EAST);
-                }
-                for (int_t gpuid=0;gpuid<num_devices;gpuid++){
                     fill_send_buffer(*domains[gpuid][level],omega,WEST);
-                }
-                for (int_t gpuid=0;gpuid<num_devices;gpuid++){
                     fill_send_buffer(*domains[gpuid][level],omega,NORTH);
-                }
-                for (int_t gpuid=0;gpuid<num_devices;gpuid++){
                     fill_send_buffer(*domains[gpuid][level],omega,SOUTH);
-                }
-                for (int_t gpuid=0;gpuid<num_devices;gpuid++){
                     fill_send_buffer(*domains[gpuid][level],omega,TOP);
-                }
-                for (int_t gpuid=0;gpuid<num_devices;gpuid++){
                     fill_send_buffer(*domains[gpuid][level],omega,BOTTOM);
-                }
-                // Looping over interior points
-                for (int_t gpuid=0;gpuid<num_devices;gpuid++){
+                    
                     Domain<T> & domain = *domains[gpuid][level];
                     DeviceArray<T>& u = *domain.u;
 

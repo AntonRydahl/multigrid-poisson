@@ -1,0 +1,108 @@
+#!/bin/bash 
+#BSUB -q gpuv100
+#BSUB -J timings_v100
+#BSUB -n 16
+#BSUB -gpu "num=4:mode=exclusive_process"
+#BSUB -R "span[hosts=1]"
+#BSUB -R "rusage[mem=16GB]"
+#BSUB -W 0:59
+#BSUB -o weak_v100_%J.out 
+#BSUB -e weak_v100_%J.err
+
+source paths/gbar/clang.sh
+export COMPILER=clang
+export GPU=V100
+export OMP_NUM_THREADS=15
+export OMP_WAIT_POLICY=ACTIVE
+
+git checkout multi_gpu_2 -- include
+make realclean; make APP=multi_gpu_weak PEER2PEER=1
+mv ./bin/multi_gpu_weak ./bin/tasking_p2p
+
+make clean; make APP=multi_gpu_weak
+mv ./bin/multi_gpu_weak ./bin/tasking
+
+git checkout multi_gpu_2_parallel_task -- include
+make clean;make APP=multi_gpu_weak
+mv ./bin/multi_gpu_weak ./bin/parallel_task 
+
+git checkout multi_gpu_2_parallel -- include
+make clean;make APP=multi_gpu_weak
+mv ./bin/multi_gpu_weak ./bin/parallel
+
+level=2
+for size in 9 17 33 65 129 257 513 641;
+do
+	filename1=results/$GPU/clang/timings/tasking_p2p_$size.txt
+	filename2=results/$GPU/clang/timings/tasking_$size.txt
+	filename3=results/$GPU/clang/timings/parallel_task_$size.txt
+	filename4=results/$GPU/clang/timings/parallel_$size.txt
+	rm -rf $filename1 $filename2 $filename3 $filename4
+	command1="./bin/tasking_p2p -x $size -y $size -z $size -levels $level -length 4 -maxiter 51 -tol 1e-6 -stats $filename1"
+	command2="./bin/tasking -x $size -y $size -z $size -levels $level -length 4 -maxiter 51 -tol 1e-6 -stats $filename2"
+	command3="./bin/parallel_task -x $size -y $size -z $size -levels $level -length 4 -maxiter 51 -tol 1e-6 -stats $filename3"
+	command4="./bin/parallel -x $size -y $size -z $size -levels $level -length 4 -maxiter 51 -tol 1e-6 -stats $filename4"
+	export CUDA_VISIBLE_DEVICES=0
+	$command1
+	$command2
+	$command3
+	$command4
+	export CUDA_VISIBLE_DEVICES=0,1
+	$command1
+	$command2
+	$command3
+	$command4
+	export CUDA_VISIBLE_DEVICES=0,1,2,3
+	$command1
+	$command2
+	$command3
+	$command4
+	if [ "513" -gt "$size" ]; then
+		level=$(($level+1))
+	fi
+done
+
+source paths/gbar/gcc.sh
+export COMPILER=gcc
+export GPU=V100
+export OMP_NUM_THREADS=15
+export OMP_WAIT_POLICY=ACTIVE
+
+git checkout multi_gpu_2 -- include
+make realclean; make APP=multi_gpu_weak BLOCK_SIZE=64
+mv ./bin/multi_gpu_weak ./bin/tasking
+
+git checkout multi_gpu_2_parallel_task -- include
+make clean;make APP=multi_gpu_weak BLOCK_SIZE=64
+mv ./bin/multi_gpu_weak ./bin/parallel_task 
+
+git checkout multi_gpu_2_parallel -- include
+make clean;make APP=multi_gpu_weak BLOCK_SIZE=64
+mv ./bin/multi_gpu_weak ./bin/parallel
+
+level=2
+for size in 9 17 33 65 129 257 513 641;
+do
+	filename2=results/$GPU/gcc/timings/tasking_$size.txt
+	filename3=results/$GPU/gcc/timings/parallel_task_$size.txt
+	filename4=results/$GPU/gcc/timings/parallel_$size.txt
+	rm -rf $filename2 $filename3 $filename4
+	command2="./bin/tasking -x $size -y $size -z $size -levels $level -length 4 -maxiter 51 -tol 1e-6 -stats $filename2"
+	command3="./bin/parallel_task -x $size -y $size -z $size -levels $level -length 4 -maxiter 51 -tol 1e-6 -stats $filename3"
+	command4="./bin/parallel -x $size -y $size -z $size -levels $level -length 4 -maxiter 51 -tol 1e-6 -stats $filename4"
+	export CUDA_VISIBLE_DEVICES=0
+	$command2
+	$command3
+	$command4
+	export CUDA_VISIBLE_DEVICES=0,1
+	$command2
+	$command3
+	$command4
+	export CUDA_VISIBLE_DEVICES=0,1,2,3
+	$command2
+	$command3
+	$command4
+	if [ "513" -gt "$size" ]; then
+		level=$(($level+1))
+	fi
+done

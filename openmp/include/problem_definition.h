@@ -13,6 +13,8 @@ namespace Poisson{
 
     double_t dudyfun(double_t x,double_t y,double_t z);
 
+    double_t dudzfun(double_t x,double_t y,double_t z);
+
     typedef double_t (*funptr)(double_t x,double_t y,double_t z);
 }
 #endif

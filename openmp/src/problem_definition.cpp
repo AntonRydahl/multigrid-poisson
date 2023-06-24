@@ -20,6 +20,10 @@ namespace Poisson {
     double_t dudyfun(double_t x,double_t y,double_t z){
         return ky*sin(kx*x)*cos(ky*y)*sin(kz*z);
     }
+
+    double_t dudzfun(double_t x,double_t y,double_t z){
+        return kz*sin(kx*x)*sin(ky*y)*cos(kz*z);
+    }
 }
 #endif
 #ifdef PROBLEM2 
@@ -41,6 +45,10 @@ namespace Poisson {
     double_t dudyfun(double_t x,double_t y,double_t z){
         return 2.0*x*x*x*y*z;
     }
+
+    double_t dudzfun(double_t x,double_t y,double_t z){
+        return x*x*x*y*y;
+    }
 }
 #endif
 #ifdef PROBLEM3
@@ -59,6 +67,10 @@ namespace Poisson {
 
     double_t dudyfun(double_t x,double_t y,double_t z){
         return 3.0*cos(x*z*z)*y*y*cos(y*y*y);
+    }
+
+    double_t dudzfun(double_t x,double_t y,double_t z){
+        return -2*x*z*sin(x*z*z)*sin(y*y*y);
     }
 }
 #endif

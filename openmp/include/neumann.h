@@ -12,7 +12,7 @@ namespace Poisson{
 
             virtual ~Neumann();
 
-            void init(funptr ufun,funptr dudxfun,funptr dudyfun,Settings & settings);
+            void init(funptr ufun,funptr dudxfun,funptr dudyfun,funptr dudzfun,Settings & settings);
 
             void write_to(DeviceArray<T> & uarr, Settings & settings);
 
@@ -44,7 +44,7 @@ namespace Poisson{
     }
 
     template<class T>
-    void Neumann<T>::init(funptr ufun,funptr dudxfun,funptr dudyfun,Settings & settings){
+    void Neumann<T>::init(funptr ufun,funptr dudxfun,funptr dudyfun,funptr dudzfun,Settings & settings){
         switch (this->location){
             case EAST:
             case WEST:
@@ -55,7 +55,7 @@ namespace Poisson{
                 this->init_by_fun(dudyfun,settings);
                 break;
             default:
-                cerr << "Neumann conditions are not yet supported on TOP and BOTTOM" << endl; 
+                this->init_by_fun(dudzfun,settings);
                 break;
         }
     }

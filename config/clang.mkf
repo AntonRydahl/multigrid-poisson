@@ -4,7 +4,7 @@ CFLAGS = -Wall -g -std=c17 -O3
 
 # Standard make variables for C++ Compiler
 CXX=clang++
-CXXFLAGS = -Wall -g -std=c++17 -O3
+CXXFLAGS = -Wall -g -std=c++17 -O3 -DPEER2PEER
 
 # OpenMP related flags
 OMPFLAGS = -fopenmp -foffload-lto
